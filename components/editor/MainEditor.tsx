@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { createEditor, Descendant } from "slate";
 import { Slate, Editable, withReact, RenderElementProps, RenderLeafProps } from "slate-react";
 import { withHistory } from "slate-history";
@@ -12,6 +12,9 @@ import { TableDialog } from "./dialogs/TableDialog";
 import { VideoDialog } from "./dialogs/VideoDialog";
 import { LinkDialog } from "./dialogs/LinkDialog";
 import { TagMappingDialog } from "./dialogs/TagMappingDialog";
+import { NewFileDialog } from "./dialogs/NewFileDialog";
+import { OpenFileDialog } from "./dialogs/OpenFileDialog";
+import { FindReplaceDialog } from "./dialogs/FindReplaceDialog";
 import { Leaf } from "./Leaf";
 import { ParagraphElement } from "./elements/ParagraphElement";
 import { HeadingElement } from "./elements/HeadingElement";
@@ -47,11 +50,29 @@ export function MainEditor() {
   const [showTableDialog, setShowTableDialog] = useState(false);
   const [showVideoDialog, setShowVideoDialog] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showNewFileDialog, setShowNewFileDialog] = useState(false);
+  const [showOpenFileDialog, setShowOpenFileDialog] = useState(false);
+  const [showFindReplaceDialog, setShowFindReplaceDialog] = useState(false);
+  const [findReplaceTab, setFindReplaceTab] = useState<"find" | "replace">("find");
 
   const editor = useMemo(
     () => withNormalization(withCustom(withHistory(withReact(createEditor())))),
     []
   );
+
+  // Load nodes from sessionStorage on mount
+  useEffect(() => {
+    const storedNodes = sessionStorage.getItem("editorNodes");
+    if (storedNodes) {
+      try {
+        const nodes = JSON.parse(storedNodes);
+        setValue(nodes);
+        sessionStorage.removeItem("editorNodes");
+      } catch (error) {
+        console.error("Failed to load stored nodes:", error);
+      }
+    }
+  }, []);
 
   const renderElement = useCallback((props: RenderElementProps) => {
     const element = props.element as CustomElement;
@@ -144,12 +165,37 @@ export function MainEditor() {
     [editor]
   );
 
+  const handleNewFile = useCallback((nodes?: Descendant[]) => {
+    if (nodes) {
+      setValue(nodes);
+    } else {
+      setValue(initialValue);
+    }
+  }, []);
+
+  const handleOpenFile = useCallback((nodes: Descendant[]) => {
+    setValue(nodes);
+  }, []);
+
+  const handleSaveFile = useCallback(() => {
+    setShowRawXml(true);
+  }, []);
+
+  const handleShowFindReplace = useCallback((tab?: "find" | "replace") => {
+    setFindReplaceTab(tab || "find");
+    setShowFindReplaceDialog(true);
+  }, []);
+
   return (
     <div className="flex h-full flex-col">
       <Slate editor={editor} initialValue={value} onChange={setValue}>
         <MenuBar
+          onNewFile={() => setShowNewFileDialog(true)}
+          onOpenFile={() => setShowOpenFileDialog(true)}
+          onSaveFile={handleSaveFile}
           onShowRawXml={() => setShowRawXml(true)}
           onShowTagMapping={() => setShowTagMapping(true)}
+          onShowFindReplace={handleShowFindReplace}
           onInsertImage={() => setShowImageDialog(true)}
           onInsertVideo={() => setShowVideoDialog(true)}
           onInsertLink={() => setShowLinkDialog(true)}
@@ -182,7 +228,7 @@ export function MainEditor() {
           onOpenChange={setShowRawXml}
           nodes={value}
           onApply={(newNodes) => {
-            setValue(newNodes);
+            setValue(newNodes as Descendant[]);
           }}
         />
         <ImageDialog
@@ -208,6 +254,21 @@ export function MainEditor() {
         <TagMappingDialog
           open={showTagMapping}
           onOpenChange={setShowTagMapping}
+        />
+        <NewFileDialog
+          open={showNewFileDialog}
+          onOpenChange={setShowNewFileDialog}
+          onNewFile={handleNewFile}
+        />
+        <OpenFileDialog
+          open={showOpenFileDialog}
+          onOpenChange={setShowOpenFileDialog}
+          onOpenFile={handleOpenFile}
+        />
+        <FindReplaceDialog
+          open={showFindReplaceDialog}
+          onOpenChange={setShowFindReplaceDialog}
+          defaultTab={findReplaceTab}
         />
       </Slate>
     </div>

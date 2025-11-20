@@ -23,7 +23,7 @@ export type ImageElement = {
   width?: number;
   height?: number;
   caption?: string;
-  alignment?: "left" | "center" | "right";
+  alignment?: "left" | "center" | "right" | "justify";
   children: EmptyText[]; // Void elements must have empty text child
 };
 
@@ -35,6 +35,7 @@ export type VideoElement = {
   controls?: boolean;
   width?: number;
   height?: number;
+  caption?: string;
   children: EmptyText[]; // Void elements must have empty text child
 };
 

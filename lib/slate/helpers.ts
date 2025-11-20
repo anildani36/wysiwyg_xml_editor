@@ -155,7 +155,7 @@ export const toggleMark = (editor: Editor, format: "bold" | "italic" | "underlin
 
 // Check if text formatting mark is active
 export const isMarkActive = (editor: Editor, format: "bold" | "italic" | "underline" | "code") => {
-  const marks = Editor.marks(editor);
+  const marks = Editor.marks(editor) as any;
   return marks ? marks[format] === true : false;
 };
 

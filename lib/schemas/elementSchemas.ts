@@ -150,6 +150,7 @@ export const videoDialogFormSchema = z.object({
   controls: z.boolean().default(true),
   width: z.coerce.number().int().positive().optional().or(z.literal("")),
   height: z.coerce.number().int().positive().optional().or(z.literal("")),
+  caption: z.string().optional(),
 });
 
 export type VideoDialogForm = z.infer<typeof videoDialogFormSchema>;

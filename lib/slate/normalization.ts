@@ -98,7 +98,7 @@ export const withNormalization = (editor: Editor) => {
     // Root level normalization
     if (path.length === 0) {
       // Ensure document has at least one block element
-      if (node.children.length === 0) {
+      if ((node as any).children.length === 0) {
         const paragraph = {
           type: "paragraph" as const,
           children: [{ text: "" }],

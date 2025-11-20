@@ -175,7 +175,7 @@ const serializeNode = (node: Node, indent = ""): string => {
   }
 
   // Fallback for unknown elements
-  return `${indent}<${element.type}>${children}</${element.type}>\n`;
+  return `${indent}<${(element as any).type}>${children}</${(element as any).type}>\n`;
 };
 
 // Main serialization function

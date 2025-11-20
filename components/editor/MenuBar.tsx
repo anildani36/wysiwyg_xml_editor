@@ -1,61 +1,150 @@
 "use client";
 
+import { useSlate } from "slate-react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toggleMark } from "@/lib/slate/helpers";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface MenuBarProps {
-  onShowRawXml?: () => void;
-  onShowTagMapping?: () => void;
-  onInsertImage?: () => void;
-  onInsertVideo?: () => void;
-  onInsertLink?: () => void;
-  onInsertTable?: () => void;
+  readonly onNewFile?: () => void;
+  readonly onOpenFile?: () => void;
+  readonly onSaveFile?: () => void;
+  readonly onShowRawXml?: () => void;
+  readonly onShowTagMapping?: () => void;
+  readonly onShowFindReplace?: (tab?: "find" | "replace") => void;
+  readonly onInsertImage?: () => void;
+  readonly onInsertVideo?: () => void;
+  readonly onInsertLink?: () => void;
+  readonly onInsertTable?: () => void;
 }
 
 export function MenuBar({
+  onNewFile,
+  onOpenFile,
+  onSaveFile,
   onShowRawXml,
   onShowTagMapping,
+  onShowFindReplace,
   onInsertImage,
   onInsertVideo,
   onInsertLink,
   onInsertTable,
 }: MenuBarProps) {
-  const handleMenuAction = (action: string) => {
-    switch (action) {
-      case "Raw XML":
-        onShowRawXml?.();
-        break;
-      case "Tag Mapping":
-        onShowTagMapping?.();
-        break;
-      case "Image":
-        onInsertImage?.();
-        break;
-      case "Video":
-        onInsertVideo?.();
-        break;
-      case "Link":
-        onInsertLink?.();
-        break;
-      case "Table":
-        onInsertTable?.();
-        break;
-      case "Documentation":
-        toast.info("Documentation coming soon");
-        break;
-      case "About":
-        toast.info("WYSIWYG XML Editor v1.0");
-        break;
-      default:
-        toast.info(`${action} feature coming soon`);
-    }
+  const editor = useSlate();
+  const router = useRouter();
+
+  // Keyboard Shortcuts
+  useHotkeys("mod+b", (e) => {
+    e.preventDefault();
+    toggleMark(editor, "bold");
+  });
+
+  useHotkeys("mod+i", (e) => {
+    e.preventDefault();
+    toggleMark(editor, "italic");
+  });
+
+  useHotkeys("mod+u", (e) => {
+    e.preventDefault();
+    toggleMark(editor, "underline");
+  });
+
+  useHotkeys("mod+z", (e) => {
+    e.preventDefault();
+    editor.undo();
+  });
+
+  useHotkeys("mod+shift+z", (e) => {
+    e.preventDefault();
+    editor.redo();
+  });
+
+  useHotkeys("mod+y", (e) => {
+    e.preventDefault();
+    editor.redo();
+  });
+
+  useHotkeys("mod+n", (e) => {
+    e.preventDefault();
+    onNewFile?.();
+  });
+
+  useHotkeys("mod+o", (e) => {
+    e.preventDefault();
+    onOpenFile?.();
+  });
+
+  useHotkeys("mod+s", (e) => {
+    e.preventDefault();
+    onSaveFile?.();
+  });
+
+  useHotkeys("mod+f", (e) => {
+    e.preventDefault();
+    onShowFindReplace?.("find");
+  });
+
+  useHotkeys("mod+h", (e) => {
+    e.preventDefault();
+    onShowFindReplace?.("replace");
+  });
+
+  const handleUndo = () => {
+    editor.undo();
+    toast.success("Undo");
+  };
+
+  const handleRedo = () => {
+    editor.redo();
+    toast.success("Redo");
+  };
+
+  const handleCut = () => {
+    document.execCommand("cut");
+    toast.success("Cut");
+  };
+
+  const handleCopy = () => {
+    document.execCommand("copy");
+    toast.success("Copied");
+  };
+
+  const handlePaste = () => {
+    document.execCommand("paste");
+  };
+
+  const handleBold = () => {
+    toggleMark(editor, "bold");
+  };
+
+  const handleItalic = () => {
+    toggleMark(editor, "italic");
+  };
+
+  const handleUnderline = () => {
+    toggleMark(editor, "underline");
+  };
+
+  const handleDocumentation = () => {
+    window.open("https://github.com/yourusername/wysiwyg-xml-editor", "_blank");
+  };
+
+  const handleAbout = () => {
+    router.push("/about");
+  };
+
+  const handleCloseEditor = () => {
+    router.push("/");
   };
 
   return (
@@ -68,18 +157,25 @@ export function MenuBar({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => handleMenuAction("New")}>
-            New
+          <DropdownMenuItem onClick={onNewFile}>
+            New File
+            <DropdownMenuShortcut>⌘N</DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Open")}>
-            Open
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Save")}>
-            Save
+          <DropdownMenuItem onClick={onOpenFile}>
+            Open File
+            <DropdownMenuShortcut>⌘O</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => handleMenuAction("Export XML")}>
-            Export XML
+          <DropdownMenuItem onClick={onShowRawXml}>
+            Show Raw XML
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onSaveFile}>
+            Save File
+            <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleCloseEditor}>
+            Close Editor
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -92,55 +188,35 @@ export function MenuBar({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => handleMenuAction("Undo")}>
+          <DropdownMenuItem onClick={handleUndo}>
             Undo
+            <DropdownMenuShortcut>⌘Z</DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Redo")}>
+          <DropdownMenuItem onClick={handleRedo}>
             Redo
+            <DropdownMenuShortcut>⌘⇧Z</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => handleMenuAction("Cut")}>
+          <DropdownMenuItem onClick={handleCut}>
             Cut
+            <DropdownMenuShortcut>⌘X</DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Copy")}>
+          <DropdownMenuItem onClick={handleCopy}>
             Copy
+            <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Paste")}>
+          <DropdownMenuItem onClick={handlePaste}>
             Paste
+            <DropdownMenuShortcut>⌘V</DropdownMenuShortcut>
           </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* Find Menu */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 px-3 text-sm font-normal">
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onShowFindReplace?.("find")}>
             Find
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => handleMenuAction("Find")}>
-            Find
+            <DropdownMenuShortcut>⌘F</DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Replace")}>
+          <DropdownMenuItem onClick={() => onShowFindReplace?.("replace")}>
             Replace
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* View Menu */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 px-3 text-sm font-normal">
-            View
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => handleMenuAction("Raw XML")}>
-            Raw XML
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Tag Mapping")}>
-            Tag Mapping
+            <DropdownMenuShortcut>⌘H</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -153,37 +229,17 @@ export function MenuBar({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => handleMenuAction("Image")}>
+          <DropdownMenuItem onClick={onInsertImage}>
             Image
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Video")}>
+          <DropdownMenuItem onClick={onInsertVideo}>
             Video
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Link")}>
+          <DropdownMenuItem onClick={onInsertLink}>
             Link
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Table")}>
+          <DropdownMenuItem onClick={onInsertTable}>
             Table
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* Format Menu */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 px-3 text-sm font-normal">
-            Format
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => handleMenuAction("Bold")}>
-            Bold
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Italic")}>
-            Italic
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("Underline")}>
-            Underline
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -196,10 +252,13 @@ export function MenuBar({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => handleMenuAction("Documentation")}>
+          <DropdownMenuItem onClick={handleDocumentation}>
             Documentation
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleMenuAction("About")}>
+          <DropdownMenuItem onClick={onShowTagMapping}>
+            Tag Mapping
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleAbout}>
             About
           </DropdownMenuItem>
         </DropdownMenuContent>

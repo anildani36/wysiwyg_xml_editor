@@ -1,7 +1,25 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, FileCode, Zap, Shield } from "lucide-react";
+import { NewFileDialog } from "@/components/editor/dialogs/NewFileDialog";
 
 export default function HomePage() {
+  const [showNewFileDialog, setShowNewFileDialog] = useState(false);
+  const router = useRouter();
+
+  const handleNewFile = (nodes?: any[]) => {
+    // Store nodes in sessionStorage to pass to editor
+    if (nodes) {
+      sessionStorage.setItem("editorNodes", JSON.stringify(nodes));
+    } else {
+      sessionStorage.removeItem("editorNodes");
+    }
+    router.push("/editor");
+  };
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -15,13 +33,13 @@ export default function HomePage() {
             Built with Next.js, Slate, and TypeScript.
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Link
-              href="/editor"
+            <button
+              onClick={() => setShowNewFileDialog(true)}
               className="rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary inline-flex items-center"
             >
               Get Started
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+            </button>
             <Link
               href="/about"
               className="text-sm font-semibold leading-6 text-foreground hover:text-primary"
@@ -100,16 +118,23 @@ export default function HomePage() {
             Try the editor now and experience the power of WYSIWYG XML editing.
           </p>
           <div className="mt-10">
-            <Link
-              href="/editor"
+            <button
+              onClick={() => setShowNewFileDialog(true)}
               className="rounded-md bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary inline-flex items-center"
             >
               Open Editor
               <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
+            </button>
           </div>
         </div>
       </section>
+
+      {/* New File Dialog */}
+      <NewFileDialog
+        open={showNewFileDialog}
+        onOpenChange={setShowNewFileDialog}
+        onNewFile={handleNewFile}
+      />
     </div>
   );
 }
